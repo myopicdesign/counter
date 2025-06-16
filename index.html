@@ -46,8 +46,8 @@
   <script>
     let count = 0;
     const counterEl = document.getElementById('counter');
+    let fullscreenEntered = false;
 
-    // Beep motivazionale
     function playBeep() {
       const ctx = new AudioContext();
       const osc = ctx.createOscillator();
@@ -62,26 +62,21 @@
       osc.stop(ctx.currentTime + 0.2);
     }
 
-    // Funzione per entrare in fullscreen
     async function goFullscreen() {
       const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        await docEl.requestFullscreen();
-      } else if (docEl.webkitRequestFullscreen) {
-        docEl.webkitRequestFullscreen();
-      } else if (docEl.msRequestFullscreen) {
-        docEl.msRequestFullscreen();
+      try {
+        if (!document.fullscreenElement && docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        }
+      } catch (e) {
+        console.warn("Fullscreen non riuscito:", e);
       }
     }
 
-    // Evento touchstart che fa partire fullscreen + conta + beep
-    async function onFirstTouch() {
-      window.removeEventListener('touchstart', onFirstTouch);
-
-      try {
+    async function onTouch() {
+      if (!fullscreenEntered) {
+        fullscreenEntered = true;
         await goFullscreen();
-      } catch(e) {
-        console.warn("Fullscreen negato o non supportato", e);
       }
 
       count++;
@@ -89,7 +84,6 @@
       playBeep();
     }
 
-    // Avvia fotocamera frontale
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -106,8 +100,8 @@
 
     startCamera();
 
-    // Metti listener sul primo tocco per fullscreen + contatore
-    window.addEventListener('touchstart', onFirstTouch, { once: true });
+    // Ogni tocco conta + fullscreen solo al primo
+    window.addEventListener('touchstart', onTouch);
   </script>
 </body>
 </html>
