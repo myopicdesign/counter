@@ -4,14 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Conta Flessioni</title>
-  <link rel="manifest" href="manifest.json" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
+      overflow: hidden;
       height: 100%;
       background: black;
-      overflow: hidden;
+      touch-action: manipulation;
     }
 
     #video {
@@ -21,7 +21,8 @@
       height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
-      z-index: -1;
+      z-index: 0;
+      background: black;
     }
 
     #counter {
@@ -29,25 +30,69 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 10rem;
+      font-size: 8rem;
       font-family: monospace;
       color: lime;
       text-shadow: 0 0 10px #000;
+      z-index: 10;
+      user-select: none;
     }
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video>
+  <video id="video" autoplay playsinline muted></video>
   <div id="counter">0</div>
 
   <script>
     let count = 0;
-    const counterEl = document.getElementById("counter");
+    let fullscreenAttivato = false;
+    const counterEl = document.getElementById('counter');
 
-    window.addEventListener("touchstart", () => {
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 440;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.stop(ctx.currentTime + 0.2);
+      } catch (e) {
+        console.warn("Beep non supportato:", e);
+      }
+    }
+
+    async function richiediFullscreen() {
+      const el = document.documentElement;
+      try {
+        if (!document.fullscreenElement) {
+          if (el.requestFullscreen) {
+            await el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            await el.webkitRequestFullscreen();
+          } else if (el.msRequestFullscreen) {
+            await el.msRequestFullscreen();
+          }
+        }
+      } catch (err) {
+        console.warn("Impossibile entrare in fullscreen:", err);
+      }
+    }
+
+    async function handleTouch() {
+      if (!fullscreenAttivato) {
+        fullscreenAttivato = true;
+        await richiediFullscreen();
+      }
+
       count++;
       counterEl.textContent = count;
-    });
+      playBeep();
+    }
 
     async function startCamera() {
       try {
@@ -55,13 +100,18 @@
           video: { facingMode: "user" },
           audio: false
         });
-        document.getElementById("video").srcObject = stream;
+        const video = document.getElementById("video");
+        video.srcObject = stream;
+        await video.play();
       } catch (e) {
-        alert("Errore fotocamera: " + e.message);
+        alert("Errore accesso fotocamera: " + e.message);
       }
     }
 
     startCamera();
+
+    // SOLO touchstart per evitare doppio conteggio
+    window.addEventListener('touchstart', handleTouch, { passive: true });
   </script>
 </body>
 </html>
