@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Conta Flessioni</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="icon-192.png" />
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('✅ Service Worker registrato'))
+        .catch(err => console.warn('❌ Service Worker error:', err));
+    }
+  </script>
+
   <style>
     html, body {
       margin: 0;
@@ -45,7 +57,6 @@
 
   <script>
     let count = 0;
-    let fullscreenAttivato = false;
     const counterEl = document.getElementById('counter');
 
     function playBeep() {
@@ -66,34 +77,6 @@
       }
     }
 
-    async function richiediFullscreen() {
-      const el = document.documentElement;
-      try {
-        if (!document.fullscreenElement) {
-          if (el.requestFullscreen) {
-            await el.requestFullscreen();
-          } else if (el.webkitRequestFullscreen) {
-            await el.webkitRequestFullscreen();
-          } else if (el.msRequestFullscreen) {
-            await el.msRequestFullscreen();
-          }
-        }
-      } catch (err) {
-        console.warn("Impossibile entrare in fullscreen:", err);
-      }
-    }
-
-    async function handleTouch() {
-      if (!fullscreenAttivato) {
-        fullscreenAttivato = true;
-        await richiediFullscreen();
-      }
-
-      count++;
-      counterEl.textContent = count;
-      playBeep();
-    }
-
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -108,10 +91,15 @@
       }
     }
 
-    startCamera();
+    function handleTouch() {
+      count++;
+      counterEl.textContent = count;
+      playBeep();
+    }
 
-    // SOLO touchstart per evitare doppio conteggio
     window.addEventListener('touchstart', handleTouch, { passive: true });
+
+    startCamera();
   </script>
 </body>
 </html>
