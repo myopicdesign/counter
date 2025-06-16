@@ -83,7 +83,7 @@
       }
     }
 
-    async function handleTouchOrClick() {
+    async function handleTouch() {
       if (!fullscreenAttivato) {
         fullscreenAttivato = true;
         await richiediFullscreen();
@@ -110,9 +110,8 @@
 
     startCamera();
 
-    // Funziona sia su mobile che su desktop
-    window.addEventListener('touchstart', handleTouchOrClick);
-    window.addEventListener('click', handleTouchOrClick);
+    // SOLO touchstart per evitare doppio conteggio
+    window.addEventListener('touchstart', handleTouch, { passive: true });
   </script>
 </body>
 </html>
