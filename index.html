@@ -3,19 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Conta Flessioni</title>
-  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#000000" />
-  <link rel="icon" href="icon-192.png" />
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✅ Service Worker registrato'))
-        .catch(err => console.warn('❌ Service Worker error:', err));
-    }
-  </script>
-
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Conta Flessioni</title>
   <style>
     html, body {
       margin: 0;
@@ -32,9 +25,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1);
-      z-index: 0;
-      background: black;
+      transform: scaleX(-1); /* specchio */
+      z-index: -1;
     }
 
     #counter {
@@ -46,13 +38,11 @@
       font-family: monospace;
       color: lime;
       text-shadow: 0 0 10px #000;
-      z-index: 10;
-      user-select: none;
     }
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline muted></video>
+  <video id="video" autoplay playsinline></video>
   <div id="counter">0</div>
 
   <script>
@@ -60,22 +50,24 @@
     const counterEl = document.getElementById('counter');
 
     function playBeep() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = 440;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        gain.gain.setValueAtTime(1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-        osc.stop(ctx.currentTime + 0.2);
-      } catch (e) {
-        console.warn("Beep non supportato:", e);
-      }
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      gain.gain.setValueAtTime(1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+      osc.stop(ctx.currentTime + 0.2);
     }
+
+    window.addEventListener('touchstart', () => {
+      count++;
+      counterEl.textContent = count;
+      playBeep();
+    });
 
     async function startCamera() {
       try {
@@ -83,21 +75,11 @@
           video: { facingMode: "user" },
           audio: false
         });
-        const video = document.getElementById("video");
-        video.srcObject = stream;
-        await video.play();
+        document.getElementById("video").srcObject = stream;
       } catch (e) {
         alert("Errore accesso fotocamera: " + e.message);
       }
     }
-
-    function handleTouch() {
-      count++;
-      counterEl.textContent = count;
-      playBeep();
-    }
-
-    window.addEventListener('touchstart', handleTouch, { passive: true });
 
     startCamera();
   </script>
