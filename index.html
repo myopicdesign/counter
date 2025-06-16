@@ -62,27 +62,31 @@
       osc.stop(ctx.currentTime + 0.2);
     }
 
-    // Aumenta contatore al tocco
-    window.addEventListener('touchstart', () => {
-      count++;
-      counterEl.textContent = count;
-      playBeep();
-    });
-
-    // Funzione per richiedere fullscreen automatico
+    // Funzione per entrare in fullscreen
     async function goFullscreen() {
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) {
-        try {
-          await docEl.requestFullscreen();
-        } catch (e) {
-          console.warn("Fullscreen automatico negato:", e);
-        }
+        await docEl.requestFullscreen();
       } else if (docEl.webkitRequestFullscreen) {
         docEl.webkitRequestFullscreen();
       } else if (docEl.msRequestFullscreen) {
         docEl.msRequestFullscreen();
       }
+    }
+
+    // Evento touchstart che fa partire fullscreen + conta + beep
+    async function onFirstTouch() {
+      window.removeEventListener('touchstart', onFirstTouch);
+
+      try {
+        await goFullscreen();
+      } catch(e) {
+        console.warn("Fullscreen negato o non supportato", e);
+      }
+
+      count++;
+      counterEl.textContent = count;
+      playBeep();
     }
 
     // Avvia fotocamera frontale
@@ -95,13 +99,15 @@
         const video = document.getElementById("video");
         video.srcObject = stream;
         await video.play();
-        await goFullscreen();  // Prova ad entrare in fullscreen appena parte la camera
       } catch (e) {
         alert("Errore accesso fotocamera: " + e.message);
       }
     }
 
     startCamera();
+
+    // Metti listener sul primo tocco per fullscreen + contatore
+    window.addEventListener('touchstart', onFirstTouch, { once: true });
   </script>
 </body>
 </html>
