@@ -20,49 +20,32 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* specchio */
-      z-index: 0; /* Cambiato da -1 a 0 */
+      transform: scaleX(-1);
+      z-index: 0;
       background: black;
     }
 
     #counter {
       position: absolute;
-      top: 30%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 8rem;
       font-family: monospace;
       color: lime;
       text-shadow: 0 0 10px #000;
-      z-index: 10; /* Assicurati che sia sopra il video */
-    }
-
-    #fullscreen-btn {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-family: sans-serif;
       z-index: 10;
-      cursor: pointer;
+      user-select: none;
     }
   </style>
 </head>
 <body>
   <video id="video" autoplay playsinline muted></video>
   <div id="counter">0</div>
-  <button id="fullscreen-btn">🔲 Schermo Intero</button>
 
   <script>
     let count = 0;
     const counterEl = document.getElementById('counter');
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
 
     // Beep motivazionale
     function playBeep() {
@@ -86,17 +69,21 @@
       playBeep();
     });
 
-    // Attiva modalità fullscreen
-    fullscreenBtn.addEventListener('click', () => {
+    // Funzione per richiedere fullscreen automatico
+    async function goFullscreen() {
       const docEl = document.documentElement;
       if (docEl.requestFullscreen) {
-        docEl.requestFullscreen();
+        try {
+          await docEl.requestFullscreen();
+        } catch (e) {
+          console.warn("Fullscreen automatico negato:", e);
+        }
       } else if (docEl.webkitRequestFullscreen) {
         docEl.webkitRequestFullscreen();
       } else if (docEl.msRequestFullscreen) {
         docEl.msRequestFullscreen();
       }
-    });
+    }
 
     // Avvia fotocamera frontale
     async function startCamera() {
@@ -107,7 +94,8 @@
         });
         const video = document.getElementById("video");
         video.srcObject = stream;
-        await video.play();  // Assicurati che parta il video
+        await video.play();
+        await goFullscreen();  // Prova ad entrare in fullscreen appena parte la camera
       } catch (e) {
         alert("Errore accesso fotocamera: " + e.message);
       }
