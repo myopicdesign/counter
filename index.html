@@ -21,7 +21,8 @@
       height: 100%;
       object-fit: cover;
       transform: scaleX(-1); /* specchio */
-      z-index: -1;
+      z-index: 0; /* Cambiato da -1 a 0 */
+      background: black;
     }
 
     #counter {
@@ -33,6 +34,7 @@
       font-family: monospace;
       color: lime;
       text-shadow: 0 0 10px #000;
+      z-index: 10; /* Assicurati che sia sopra il video */
     }
 
     #fullscreen-btn {
@@ -53,7 +55,7 @@
   </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video>
+  <video id="video" autoplay playsinline muted></video>
   <div id="counter">0</div>
   <button id="fullscreen-btn">🔲 Schermo Intero</button>
 
@@ -105,6 +107,7 @@
         });
         const video = document.getElementById("video");
         video.srcObject = stream;
+        await video.play();  // Assicurati che parta il video
       } catch (e) {
         alert("Errore accesso fotocamera: " + e.message);
       }
@@ -114,5 +117,3 @@
   </script>
 </body>
 </html>
-# Auto detect text files and perform LF normalization
-* text=auto
