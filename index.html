@@ -45,38 +45,48 @@
 
   <script>
     let count = 0;
+    let fullscreenAttivato = false;
     const counterEl = document.getElementById('counter');
-    let fullscreenEntered = false;
 
     function playBeep() {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 440;
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      gain.gain.setValueAtTime(1, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-      osc.stop(ctx.currentTime + 0.2);
-    }
-
-    async function goFullscreen() {
-      const docEl = document.documentElement;
       try {
-        if (!document.fullscreenElement && docEl.requestFullscreen) {
-          await docEl.requestFullscreen();
-        }
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 440;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.setValueAtTime(1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.stop(ctx.currentTime + 0.2);
       } catch (e) {
-        console.warn("Fullscreen non riuscito:", e);
+        console.warn("Beep non supportato:", e);
       }
     }
 
-    async function onTouch() {
-      if (!fullscreenEntered) {
-        fullscreenEntered = true;
-        await goFullscreen();
+    async function richiediFullscreen() {
+      const el = document.documentElement;
+      try {
+        if (!document.fullscreenElement) {
+          if (el.requestFullscreen) {
+            await el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            await el.webkitRequestFullscreen();
+          } else if (el.msRequestFullscreen) {
+            await el.msRequestFullscreen();
+          }
+        }
+      } catch (err) {
+        console.warn("Impossibile entrare in fullscreen:", err);
+      }
+    }
+
+    async function handleTouchOrClick() {
+      if (!fullscreenAttivato) {
+        fullscreenAttivato = true;
+        await richiediFullscreen();
       }
 
       count++;
@@ -100,8 +110,9 @@
 
     startCamera();
 
-    // Ogni tocco conta + fullscreen solo al primo
-    window.addEventListener('touchstart', onTouch);
+    // Funziona sia su mobile che su desktop
+    window.addEventListener('touchstart', handleTouchOrClick);
+    window.addEventListener('click', handleTouchOrClick);
   </script>
 </body>
 </html>
